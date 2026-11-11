@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9697747567f2b7448f40c6260e6f059, type: 3}
+  m_Name: Pyramids_Spire
+  m_EditorClassIdentifier: Assembly-CSharp::DawnOfShapes.Units.UnitDefinition
+  displayName: Spire
+  description: Long-range artillery with splash damage. Fragile up close.
+  mesh: {fileID: 4300000, guid: 92e2af2317cc7fc489ed5254e97d5b7b, type: 2}
+  scale: {x: 1.3, y: 2.6, z: 1.3}
+  producible: 1
+  cost: 110
+  buildTime: 16
+  popCost: 1
+  maxHealth: 130
+  armour: 0
+  damage: 55
+  range: 18
+  attackCooldown: 2.6
+  acquireRange: 20
+  projectileSpeed: 18
+  splashRadius: 3
+  moveSpeed: 3.2
+  slowAmount: 0
+  slowDuration: 0
+  canBuildWalls: 0
+  splitInto: {fileID: 0}
+  splitCount: 0

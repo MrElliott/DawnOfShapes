@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa314a85223767d44b5b5aae740cd071, type: 3}
+  m_Name: GameVisuals
+  m_EditorClassIdentifier: Assembly-CSharp::DawnOfShapes.Core.GameVisuals
+  unlitMaterial: {fileID: 2100000, guid: 3ad6eb3a309cffb47b27bf331dffe8cc, type: 2}
+  selectionMaterial: {fileID: 2100000, guid: 84587bd216464f34e94c63967576f358, type: 2}
+  boxMesh: {fileID: 4300000, guid: cc6e7659c62fbaa45bb8ffbdbb4b2808, type: 2}
+  projectileMesh: {fileID: 4300000, guid: fb3e5c5d82cc22f4f80dfa86a353f92c, type: 2}
+  neutralColor: {r: 0.75, g: 0.75, b: 0.72, a: 1}

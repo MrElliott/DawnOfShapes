@@ -16,3 +16,18 @@ MonoBehaviour:
   shape: 0
   color: {r: 0.22, g: 0.47, b: 0.92, a: 1}
   description: Blocky, sturdy and orderly. Territory becomes terraced and grid-aligned.
+  material: {fileID: 2100000, guid: fd8f8eda3c9dc8e40ae3a7c72774aea9, type: 2}
+  shapeMesh: {fileID: 4300000, guid: cc6e7659c62fbaa45bb8ffbdbb4b2808, type: 2}
+  units:
+  - {fileID: 11400000, guid: 39dea759108e01d41bb51130f0985b71, type: 2}
+  - {fileID: 11400000, guid: 967bbe34b3e767a42bbf2a01806d9d1b, type: 2}
+  startingUnits:
+  - {fileID: 11400000, guid: 39dea759108e01d41bb51130f0985b71, type: 2}
+  - {fileID: 11400000, guid: 39dea759108e01d41bb51130f0985b71, type: 2}
+  - {fileID: 11400000, guid: 967bbe34b3e767a42bbf2a01806d9d1b, type: 2}
+  researchBuildingName: Foundry
+  researchBuildingCost: 150
+  upgrades:
+  - {fileID: 11400000, guid: b03c153b0bb3a34429569818ceeb118c, type: 2}
+  - {fileID: 11400000, guid: a12badb8d6e4eff4c94f84e00697b824, type: 2}
+  - {fileID: 11400000, guid: d6b81db8a60f271429a795b583139b2b, type: 2}

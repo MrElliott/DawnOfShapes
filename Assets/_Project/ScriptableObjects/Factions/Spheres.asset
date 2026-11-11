@@ -14,5 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DawnOfShapes.Factions.FactionDefinition
   factionName: Spheres
   shape: 1
-  color: {r: 0.88, g: 0.28, b: 0.24, a: 1}
-  description: Fluid and mobile. Territory rolls into soft, rounded hills.
+  color: {r: 0.95, g: 0.5, b: 0.2, a: 1}
+  description: Fluid and mobile. Fast, cheap units that swarm and flank; fragile.
+  material: {fileID: 2100000, guid: 016f09ea37519564aa835668ea6acd02, type: 2}
+  shapeMesh: {fileID: 4300000, guid: fb3e5c5d82cc22f4f80dfa86a353f92c, type: 2}
+  units:
+  - {fileID: 11400000, guid: 3fc74e90602be3540ace9c7b3df38209, type: 2}
+  - {fileID: 11400000, guid: a12004b51c14adc42ac215bfab203a30, type: 2}
+  startingUnits:
+  - {fileID: 11400000, guid: 3fc74e90602be3540ace9c7b3df38209, type: 2}
+  - {fileID: 11400000, guid: 3fc74e90602be3540ace9c7b3df38209, type: 2}
+  - {fileID: 11400000, guid: a12004b51c14adc42ac215bfab203a30, type: 2}
+  researchBuildingName: Orbit Hub
+  researchBuildingCost: 150
+  upgrades:
+  - {fileID: 11400000, guid: 414749fa4c973104b95288009892b058, type: 2}
+  - {fileID: 11400000, guid: 1d416bcef1a08ea47b15c058cc4cd447, type: 2}
+  - {fileID: 11400000, guid: 74d38a7f9c05f334196c95bfc337d18e, type: 2}

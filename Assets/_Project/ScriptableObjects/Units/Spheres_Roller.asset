@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9697747567f2b7448f40c6260e6f059, type: 3}
+  m_Name: Spheres_Roller
+  m_EditorClassIdentifier: Assembly-CSharp::DawnOfShapes.Units.UnitDefinition
+  displayName: Roller
+  description: Fast, cheap skirmisher. Flanks and chases.
+  mesh: {fileID: 4300000, guid: fb3e5c5d82cc22f4f80dfa86a353f92c, type: 2}
+  scale: {x: 1.1, y: 1.1, z: 1.1}
+  producible: 1
+  cost: 40
+  buildTime: 7
+  popCost: 1
+  maxHealth: 90
+  armour: 0
+  damage: 9
+  range: 6
+  attackCooldown: 0.7
+  acquireRange: 14
+  projectileSpeed: 0
+  splashRadius: 0
+  moveSpeed: 8
+  slowAmount: 0
+  slowDuration: 0
+  canBuildWalls: 0
+  splitInto: {fileID: 0}
+  splitCount: 0

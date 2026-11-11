@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9697747567f2b7448f40c6260e6f059, type: 3}
+  m_Name: Cubes_BlockTrooper
+  m_EditorClassIdentifier: Assembly-CSharp::DawnOfShapes.Units.UnitDefinition
+  displayName: Block Trooper
+  description: Melee tank. Soaks damage and holds points.
+  mesh: {fileID: 4300000, guid: cc6e7659c62fbaa45bb8ffbdbb4b2808, type: 2}
+  scale: {x: 1.4, y: 1.4, z: 1.4}
+  producible: 1
+  cost: 60
+  buildTime: 12
+  popCost: 1
+  maxHealth: 260
+  armour: 4
+  damage: 18
+  range: 1.5
+  attackCooldown: 1
+  acquireRange: 10
+  projectileSpeed: 0
+  splashRadius: 0
+  moveSpeed: 4
+  slowAmount: 0
+  slowDuration: 0
+  canBuildWalls: 0
+  splitInto: {fileID: 0}
+  splitCount: 0

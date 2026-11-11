@@ -16,3 +16,18 @@ MonoBehaviour:
   shape: 2
   color: {r: 0.95, g: 0.76, b: 0.2, a: 1}
   description: Sharp and aggressive. Territory juts into angular spikes and ridges.
+  material: {fileID: 2100000, guid: 1823b939dcadf434b98051c0092a2e82, type: 2}
+  shapeMesh: {fileID: 4300000, guid: 92e2af2317cc7fc489ed5254e97d5b7b, type: 2}
+  units:
+  - {fileID: 11400000, guid: 8473d95b8f52e354f9685367fb8aaef5, type: 2}
+  - {fileID: 11400000, guid: 5644ca1da4a589b49bfe229c1361ef61, type: 2}
+  startingUnits:
+  - {fileID: 11400000, guid: 5644ca1da4a589b49bfe229c1361ef61, type: 2}
+  - {fileID: 11400000, guid: 5644ca1da4a589b49bfe229c1361ef61, type: 2}
+  - {fileID: 11400000, guid: 8473d95b8f52e354f9685367fb8aaef5, type: 2}
+  researchBuildingName: Observatory
+  researchBuildingCost: 150
+  upgrades:
+  - {fileID: 11400000, guid: 7cbae092806eb5146ba5c5ed865ec510, type: 2}
+  - {fileID: 11400000, guid: 074bb7a82c6b43a428aa13caa51a2c50, type: 2}
+  - {fileID: 11400000, guid: 587bbc38983fc144eabbd79a73b5dd95, type: 2}

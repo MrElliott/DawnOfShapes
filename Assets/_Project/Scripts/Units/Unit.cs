@@ -1,52 +1,87 @@
 using System.Collections.Generic;
+using DawnOfShapes.Core;
 using DawnOfShapes.Factions;
 using UnityEngine;
 using UnityEngine.AI;
 
 namespace DawnOfShapes.Units
 {
-    [RequireComponent(typeof(NavMeshAgent))]
-    public class Unit : MonoBehaviour
+    public enum UnitOrder
     {
-        private static readonly List<Unit> all = new List<Unit>();
-        public static IReadOnlyList<Unit> All => all;
+        Idle,
+        Move,
+        Attack,
+        AttackMove,
+        BuildWall
+    }
 
-        [SerializeField] private int ownerPlayerId;
-        [SerializeField] private ShapeType shape;
+    [RequireComponent(typeof(NavMeshAgent))]
+    public class Unit : Entity
+    {
+        private static readonly List<Unit> allUnits = new List<Unit>();
+        public static IReadOnlyList<Unit> AllUnits => allUnits;
+
+        [SerializeField] private UnitDefinition definition;
         [SerializeField] private GameObject selectionIndicator;
 
         private NavMeshAgent agent;
+        private PlayerState state;
+        private UnitOrder order;
+        private Vector3 orderPoint;
+        private Entity orderTarget;
+        private Entity engaged;
+        private float cooldown;
+        private float scanTimer;
+        private float repathTimer;
+        private float slowFactor = 1f;
+        private float slowTimer;
 
-        public int OwnerPlayerId => ownerPlayerId;
-        public ShapeType Shape => shape;
+        public UnitDefinition Definition => definition;
+        public UnitOrder Order => order;
         public bool IsSelected { get; private set; }
+        public bool IsIdle => order == UnitOrder.Idle && engaged == null;
+        public bool IsSlowed => slowTimer > 0f;
+        public Entity CurrentTarget => order == UnitOrder.Attack ? orderTarget : engaged;
+
+        public override string DisplayName => definition != null ? definition.displayName : name;
+        public override float Armour => definition.armour + Bonus(UpgradeType.Armour);
+        public float Damage => definition.damage * (1f + Bonus(UpgradeType.Damage));
+        public float Speed => definition.moveSpeed * (1f + Bonus(UpgradeType.Speed)) * slowFactor;
+
+        private float Bonus(UpgradeType type) => state != null ? state.GetBonus(type) : 0f;
 
         private void Awake()
         {
             agent = GetComponent<NavMeshAgent>();
-            SetSelected(false);
         }
 
-        private void Start()
+        protected override void OnEnable()
         {
-            // Agents are saved disabled and enabled here, after every NavMeshSurface.OnEnable has
-            // registered its baked data, otherwise scene-load order can leave them off the NavMesh.
-            if (NavMesh.SamplePosition(transform.position, out var hit, 5f, NavMesh.AllAreas))
-            {
-                transform.position = hit.position;
-            }
-            agent.enabled = true;
-            if (!agent.isOnNavMesh) Debug.LogWarning($"{name} is not on the NavMesh.", this);
+            base.OnEnable();
+            allUnits.Add(this);
         }
 
-        private void OnEnable() => all.Add(this);
-        private void OnDisable() => all.Remove(this);
-
-        public void Initialise(int owner, ShapeType unitShape, GameObject indicator)
+        protected override void OnDisable()
         {
-            ownerPlayerId = owner;
-            shape = unitShape;
+            base.OnDisable();
+            allUnits.Remove(this);
+        }
+
+        public void Initialise(UnitDefinition def, int owner, GameObject indicator)
+        {
+            definition = def;
             selectionIndicator = indicator;
+            InitEntity(owner, def.maxHealth, def.Radius);
+            state = MatchManager.Instance != null ? MatchManager.Instance.GetState(owner) : null;
+
+            agent.radius = def.Radius;
+            agent.height = def.scale.y;
+            agent.speed = Speed;
+            agent.angularSpeed = 720f;
+            agent.acceleration = 40f;
+            agent.stoppingDistance = 0.3f;
+            scanTimer = Random.value * 0.3f;
+            SetSelected(false);
         }
 
         public void SetSelected(bool selected)
@@ -55,14 +90,248 @@ namespace DawnOfShapes.Units
             if (selectionIndicator != null) selectionIndicator.SetActive(selected);
         }
 
-        public bool MoveTo(Vector3 destination)
+        // ---- Commands ----
+
+        public void CommandMove(Vector3 destination)
         {
-            if (agent == null || !agent.isOnNavMesh) return false;
-            if (NavMesh.SamplePosition(destination, out var hit, 4f, NavMesh.AllAreas))
+            order = UnitOrder.Move;
+            orderTarget = null;
+            engaged = null;
+            orderPoint = SampleNavMesh(destination);
+            if (agent.isOnNavMesh) agent.SetDestination(orderPoint);
+        }
+
+        public void CommandAttack(Entity target)
+        {
+            if (!IsValidTarget(target)) return;
+            order = UnitOrder.Attack;
+            orderTarget = target;
+            engaged = null;
+            repathTimer = 0f;
+        }
+
+        public void CommandAttackMove(Vector3 destination)
+        {
+            order = UnitOrder.AttackMove;
+            orderTarget = null;
+            engaged = null;
+            orderPoint = SampleNavMesh(destination);
+            if (agent.isOnNavMesh) agent.SetDestination(orderPoint);
+        }
+
+        public bool CommandBuildWall(Vector3 point)
+        {
+            if (!definition.canBuildWalls) return false;
+            order = UnitOrder.BuildWall;
+            orderTarget = null;
+            engaged = null;
+            orderPoint = point;
+            if (agent.isOnNavMesh) agent.SetDestination(SampleNavMesh(point));
+            return true;
+        }
+
+        public void CommandStop() => SetIdle();
+
+        public void ApplySlow(float amount, float duration)
+        {
+            slowFactor = Mathf.Min(slowFactor, 1f - amount);
+            slowTimer = Mathf.Max(slowTimer, duration);
+        }
+
+        // ---- Behaviour ----
+
+        private void Update()
+        {
+            if (IsDead || definition == null || !agent.isOnNavMesh) return;
+            float dt = Time.deltaTime;
+            if (dt <= 0f) return;
+
+            cooldown -= dt;
+            scanTimer -= dt;
+            repathTimer -= dt;
+            if (slowTimer > 0f)
             {
-                return agent.SetDestination(hit.position);
+                slowTimer -= dt;
+                if (slowTimer <= 0f) slowFactor = 1f;
             }
-            return false;
+            agent.speed = Speed;
+
+            switch (order)
+            {
+                case UnitOrder.Move:
+                    if (HasArrived()) SetIdle();
+                    break;
+
+                case UnitOrder.Attack:
+                    if (!IsValidTarget(orderTarget)) SetIdle();
+                    else Engage(orderTarget);
+                    break;
+
+                case UnitOrder.AttackMove:
+                    UpdateAutoEngage();
+                    if (engaged != null)
+                    {
+                        Engage(engaged);
+                    }
+                    else
+                    {
+                        MoveAgentTo(orderPoint);
+                        if (HasArrived()) SetIdle();
+                    }
+                    break;
+
+                case UnitOrder.BuildWall:
+                    if (FlatDistanceTo(orderPoint) <= 3f)
+                    {
+                        if (MatchManager.Instance != null) MatchManager.Instance.TryBuildWall(this, orderPoint);
+                        SetIdle();
+                    }
+                    else if (!agent.pathPending && !agent.hasPath)
+                    {
+                        SetIdle(); // unreachable
+                    }
+                    break;
+
+                default:
+                    bool wasEngaged = engaged != null;
+                    UpdateAutoEngage();
+                    if (engaged != null) Engage(engaged);
+                    else if (wasEngaged && agent.hasPath) agent.ResetPath();
+                    break;
+            }
+        }
+
+        private void UpdateAutoEngage()
+        {
+            if (engaged != null && (!IsValidTarget(engaged) || SurfaceDistanceTo(engaged) > definition.acquireRange * 1.5f))
+            {
+                engaged = null;
+            }
+            if (engaged == null && scanTimer <= 0f)
+            {
+                scanTimer = 0.3f;
+                engaged = FindTarget(definition.acquireRange);
+            }
+        }
+
+        private Entity FindTarget(float searchRange)
+        {
+            Entity best = null;
+            float bestScore = float.MaxValue;
+            var entities = Entity.All;
+            for (int i = 0; i < entities.Count; i++)
+            {
+                var e = entities[i];
+                if (e.IsDead || !IsEnemyOf(e)) continue;
+                float d = SurfaceDistanceTo(e);
+                if (d > searchRange) continue;
+                // Prefer units over buildings.
+                float score = d + (e is Unit ? 0f : 6f);
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    best = e;
+                }
+            }
+            return best;
+        }
+
+        private void Engage(Entity target)
+        {
+            float d = SurfaceDistanceTo(target);
+            if (d <= definition.range)
+            {
+                if (agent.hasPath) agent.ResetPath();
+                Vector3 dir = target.transform.position - transform.position;
+                dir.y = 0f;
+                if (dir.sqrMagnitude > 0.01f)
+                {
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(dir), 720f * Time.deltaTime);
+                }
+                if (cooldown <= 0f)
+                {
+                    cooldown = definition.attackCooldown;
+                    PerformAttack(target);
+                }
+            }
+            else if (repathTimer <= 0f)
+            {
+                repathTimer = 0.25f;
+                agent.SetDestination(target.transform.position);
+            }
+        }
+
+        private void PerformAttack(Entity target)
+        {
+            Color color = state != null ? state.Player.Color : Color.white;
+            Vector3 muzzle = transform.position + Vector3.up * definition.scale.y * 0.8f;
+            if (definition.projectileSpeed > 0f)
+            {
+                Projectile.Launch(muzzle, target, Damage, definition, OwnerPlayerId, TeamId, color);
+            }
+            else
+            {
+                DealHit(target, Damage, definition);
+                if (definition.range > 2.5f)
+                {
+                    Tracer.Show(muzzle, target.transform.position + Vector3.up * 0.6f, color);
+                }
+            }
+        }
+
+        public static void DealHit(Entity target, float damage, UnitDefinition source)
+        {
+            if (target == null || target.IsDead) return;
+            if (source != null && source.slowAmount > 0f && target is Unit unit)
+            {
+                unit.ApplySlow(source.slowAmount, source.slowDuration);
+            }
+            target.TakeDamage(damage, null);
+        }
+
+        protected override void Die()
+        {
+            if (definition.splitInto != null && definition.splitCount > 0)
+            {
+                for (int i = 0; i < definition.splitCount; i++)
+                {
+                    float angle = i * Mathf.PI * 2f / definition.splitCount;
+                    Vector3 offset = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * 1.2f;
+                    UnitFactory.Spawn(definition.splitInto, OwnerPlayerId, transform.position + offset, transform.rotation);
+                }
+            }
+            base.Die();
+        }
+
+        // ---- Helpers ----
+
+        private bool IsValidTarget(Entity target) => target != null && !target.IsDead && IsEnemyOf(target);
+
+        private void SetIdle()
+        {
+            order = UnitOrder.Idle;
+            orderTarget = null;
+            engaged = null;
+            if (agent.isOnNavMesh && agent.hasPath) agent.ResetPath();
+        }
+
+        private bool HasArrived()
+        {
+            return !agent.pathPending && (!agent.hasPath || agent.remainingDistance <= agent.stoppingDistance + 0.5f);
+        }
+
+        private void MoveAgentTo(Vector3 point)
+        {
+            if (agent.pathPending) return;
+            if (!agent.hasPath || (agent.destination - point).sqrMagnitude > 1f)
+            {
+                agent.SetDestination(point);
+            }
+        }
+
+        public static Vector3 SampleNavMesh(Vector3 point)
+        {
+            return NavMesh.SamplePosition(point, out var hit, 6f, NavMesh.AllAreas) ? hit.position : point;
         }
     }
 }

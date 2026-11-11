@@ -52,6 +52,15 @@ namespace DawnOfShapes.CameraControl
             boundsMax = max;
         }
 
+        public void JumpTo(Vector3 position, float yawDegrees)
+        {
+            targetPosition = position;
+            transform.position = position;
+            targetYaw = yaw = yawDegrees;
+            transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+            ApplyCameraTransform();
+        }
+
         private void Update()
         {
             var keyboard = Keyboard.current;
