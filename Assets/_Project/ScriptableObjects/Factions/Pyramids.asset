@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5d67a91d7f22f54f885fe3ece16711c, type: 3}
+  m_Name: Pyramids
+  m_EditorClassIdentifier: Assembly-CSharp::DawnOfShapes.Factions.FactionDefinition
+  factionName: Pyramids
+  shape: 2
+  color: {r: 0.95, g: 0.76, b: 0.2, a: 1}
+  description: Sharp and aggressive. Territory juts into angular spikes and ridges.
