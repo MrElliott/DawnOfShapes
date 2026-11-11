@@ -1,12 +1,11 @@
 {
-  "_comment": "Proposed changes from the baseline balance run (results/baseline). Not applied to the assets. Test with: ./tools/balance.ps1 -Balance tools/balance/proposed.json",
+  "_comment": "Proposed changes, not applied to the assets. Pass 2 (armour 3) tested: Cubes fell to 12% overall, so armour is now 3.5 and this exact file is UNTESTED. Flat armour against low-damage units is a cliff: re-test before applying. Test with: ./tools/balance.ps1 -Balance tools/balance/proposed.json",
   "units": {
-    "BlockTrooper": { "armour": 2, "maxHealth": 240, "cost": 70 },
-    "Roller": { "damage": 11, "maxHealth": 100 },
-    "OrbCluster": { "maxHealth": 220, "damage": 14 },
-    "MiniRoller": { "damage": 7 },
-    "Spire": { "damage": 45, "splashRadius": 2, "cost": 120 },
-    "PrismScout": { "damage": 12 }
+    "BlockTrooper": { "armour": 3.5 },
+    "Roller": { "damage": 10, "maxHealth": 95 },
+    "OrbCluster": { "maxHealth": 200, "damage": 13 },
+    "Spire": { "damage": 48, "splashRadius": 2.5, "cost": 115 },
+    "PrismScout": { "damage": 11 }
   },
   "settings": {
     "captureTime": 15,
