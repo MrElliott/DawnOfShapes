@@ -108,14 +108,14 @@ namespace DawnOfShapes.EditorTools
             {
                 Set(u, "Block Trooper", "Melee tank. Soaks damage and holds points.", data.Box, new Vector3(1.4f, 1.4f, 1.4f));
                 u.cost = 60; u.buildTime = 12f;
-                u.maxHealth = 260f; u.armour = 4f; u.damage = 18f; u.range = 1.5f; u.attackCooldown = 1f;
+                u.maxHealth = 260f; u.armour = 30f; u.damage = 18f; u.range = 1.5f; u.attackCooldown = 1f;
                 u.acquireRange = 10f; u.moveSpeed = 4f;
             });
             var stacker = EnsureUnit("Cubes_Stacker", u =>
             {
                 Set(u, "Stacker", "Builder. Places cheap wall blocks [B]. Weak in a fight.", data.Box, new Vector3(1.2f, 0.8f, 1.2f));
                 u.cost = 50; u.buildTime = 10f;
-                u.maxHealth = 140f; u.armour = 2f; u.damage = 8f; u.range = 1.5f; u.attackCooldown = 1.2f;
+                u.maxHealth = 140f; u.armour = 15f; u.damage = 8f; u.range = 1.5f; u.attackCooldown = 1.2f;
                 u.acquireRange = 6f; u.moveSpeed = 4.2f; u.canBuildWalls = true;
             });
 
@@ -155,7 +155,7 @@ namespace DawnOfShapes.EditorTools
             {
                 Set(u, "Prism Scout", "Fast spotter. Its beam slows enemies by 40%.", data.Octahedron, new Vector3(1f, 1.4f, 1f));
                 u.cost = 60; u.buildTime = 9f;
-                u.maxHealth = 120f; u.armour = 1f; u.damage = 10f; u.range = 9f; u.attackCooldown = 1f;
+                u.maxHealth = 120f; u.armour = 10f; u.damage = 10f; u.range = 9f; u.attackCooldown = 1f;
                 u.acquireRange = 22f; u.moveSpeed = 7f; u.slowAmount = 0.4f; u.slowDuration = 2.5f;
             });
 
@@ -169,7 +169,7 @@ namespace DawnOfShapes.EditorTools
             FillFaction(cubes, data.Box, new List<UnitDefinition> { trooper, stacker },
                 new List<UnitDefinition> { trooper, trooper, stacker }, "Foundry", 150, new List<UpgradeDefinition>
                 {
-                    EnsureUpgrade("Cubes_ReinforcedPlating", "Reinforced Plating", "+3 armour for all units.", UpgradeType.Armour, 3f, 120),
+                    EnsureUpgrade("Cubes_ReinforcedPlating", "Reinforced Plating", "+15% armour for all units.", UpgradeType.Armour, 15f, 120),
                     EnsureUpgrade("Cubes_HeavyBlocks", "Heavy Blocks", "+20% damage.", UpgradeType.Damage, 0.2f, 120),
                     EnsureUpgrade("Cubes_AssemblyLine", "Assembly Line", "Units build 25% faster.", UpgradeType.BuildTime, 0.25f, 100)
                 });
@@ -177,14 +177,14 @@ namespace DawnOfShapes.EditorTools
                 new List<UnitDefinition> { roller, roller, orb }, "Orbit Hub", 150, new List<UpgradeDefinition>
                 {
                     EnsureUpgrade("Spheres_Momentum", "Momentum", "+20% move speed.", UpgradeType.Speed, 0.2f, 100),
-                    EnsureUpgrade("Spheres_HardenedShells", "Hardened Shells", "+2 armour for all units.", UpgradeType.Armour, 2f, 110),
+                    EnsureUpgrade("Spheres_HardenedShells", "Hardened Shells", "+10% armour for all units.", UpgradeType.Armour, 10f, 110),
                     EnsureUpgrade("Spheres_MassProduction", "Mass Production", "Units cost 20% less.", UpgradeType.UnitCost, 0.2f, 120)
                 });
             FillFaction(pyramids, data.Pyramid, new List<UnitDefinition> { spire, scout },
                 new List<UnitDefinition> { scout, scout, spire }, "Observatory", 150, new List<UpgradeDefinition>
                 {
                     EnsureUpgrade("Pyramids_FocusedLight", "Focused Light", "+25% damage.", UpgradeType.Damage, 0.25f, 140),
-                    EnsureUpgrade("Pyramids_FacetedArmour", "Faceted Armour", "+2 armour for all units.", UpgradeType.Armour, 2f, 110),
+                    EnsureUpgrade("Pyramids_FacetedArmour", "Faceted Armour", "+10% armour for all units.", UpgradeType.Armour, 10f, 110),
                     EnsureUpgrade("Pyramids_Precision", "Precision Engineering", "Units build 25% faster.", UpgradeType.BuildTime, 0.25f, 100)
                 });
 

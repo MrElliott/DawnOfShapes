@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Pyramids_FacetedArmour
   m_EditorClassIdentifier: Assembly-CSharp::DawnOfShapes.Factions.UpgradeDefinition
   displayName: Faceted Armour
-  description: +2 armour for all units.
+  description: +10% armour for all units.
   type: 0
-  amount: 2
+  amount: 10
   cost: 110
   researchTime: 25

@@ -205,7 +205,7 @@ namespace DawnOfShapes.UI
                 var d = u.Definition;
                 GUI.Label(new Rect(r.x + 12f, r.y + 8f, r.width - 24f, 26f), d.displayName, title);
                 GUI.Label(new Rect(r.x + 12f, r.y + 36f, r.width - 24f, 110f),
-                    $"HP {u.Health:F0} / {u.MaxHealth:F0}    Armour {u.Armour:F0}\n" +
+                    $"HP {u.Health:F0} / {u.MaxHealth:F0}    Armour {u.Armour:F0}%\n" +
                     $"Damage {u.Damage:F0} every {d.attackCooldown:F1}s    Range {d.range:F0} m\n" +
                     $"Speed {u.Speed:F1}{(u.IsSlowed ? " (slowed)" : "")}    Order {u.Order}\n" +
                     d.description, small);

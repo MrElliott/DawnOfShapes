@@ -23,12 +23,12 @@ MonoBehaviour:
   startingVictoryPoints: 1000
   victoryPointDrainPerPoint: 0.5
   baseMaxHealth: 4000
-  baseArmour: 5
+  baseArmour: 35
   baseSize: {x: 7, y: 5, z: 7}
   researchBuildingHealth: 600
-  researchBuildingArmour: 3
+  researchBuildingArmour: 25
   researchBuildingSize: {x: 4, y: 5, z: 4}
   wallCost: 25
   wallHealth: 300
-  wallArmour: 6
+  wallArmour: 50
   wallSize: {x: 4, y: 1.8, z: 1}

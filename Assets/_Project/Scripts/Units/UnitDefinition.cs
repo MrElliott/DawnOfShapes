@@ -22,6 +22,7 @@ namespace DawnOfShapes.Units
 
         [Header("Combat")]
         public float maxHealth = 100f;
+        [Tooltip("Percentage damage reduction, 0 to 75.")]
         public float armour;
         public float damage = 10f;
         [Tooltip("Attack range measured edge to edge, in metres.")]

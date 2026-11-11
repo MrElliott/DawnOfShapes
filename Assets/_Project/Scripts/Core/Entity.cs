@@ -39,12 +39,16 @@ namespace DawnOfShapes.Core
 
         public bool IsEnemyOf(Entity other) => other != null && other.TeamId != TeamId;
 
+        /// <summary>Highest damage reduction armour can reach, in percent.</summary>
+        public const float MaxArmour = 75f;
+
         /// <summary>Applies damage after armour and returns the health actually removed.</summary>
         public float TakeDamage(float amount)
         {
             if (IsDead) return 0f;
-            // Armour is flat reduction, but every hit does at least 20% of its damage.
-            float dealt = Mathf.Min(Health, Mathf.Max(amount * 0.2f, amount - Armour));
+            // Armour is a percentage damage reduction, so it scales the same against small and large hits.
+            float reduction = Mathf.Clamp(Armour, 0f, MaxArmour) / 100f;
+            float dealt = Mathf.Min(Health, amount * (1f - reduction));
             Health -= dealt;
             if (Health <= 0f)
             {

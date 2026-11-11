@@ -21,7 +21,7 @@ MonoBehaviour:
   buildTime: 9
   popCost: 1
   maxHealth: 120
-  armour: 1
+  armour: 10
   damage: 10
   range: 9
   attackCooldown: 1

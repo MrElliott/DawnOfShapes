@@ -199,6 +199,34 @@ namespace DawnOfShapes.Units
                     else if (wasEngaged && agent.hasPath) agent.ResetPath();
                     break;
             }
+
+            if (order != UnitOrder.BuildWall && !agent.hasPath && !agent.pathPending) ApplySeparation(dt);
+        }
+
+        /// <summary>
+        /// Light steering that nudges stationary units apart from allies closer than
+        /// <see cref="Formation.SpacingPerRadius"/> radii, so groups don't settle into tight blobs.
+        /// </summary>
+        private void ApplySeparation(float dt)
+        {
+            Vector3 push = Vector3.zero;
+            for (int i = 0; i < allUnits.Count; i++)
+            {
+                var other = allUnits[i];
+                if (other == this || other.IsDead || other.TeamId != TeamId) continue;
+                Vector3 d = transform.position - other.transform.position;
+                d.y = 0f;
+                float want = (Radius + other.Radius) * Formation.SpacingPerRadius * 0.5f;
+                float dist = d.magnitude;
+                if (dist >= want) continue;
+                // Coincident units get a deterministic sideways push based on instance order.
+                Vector3 dir = dist > 0.001f ? d / dist : (GetInstanceID() < other.GetInstanceID() ? Vector3.right : Vector3.left);
+                push += dir * (want - dist);
+            }
+            if (push.sqrMagnitude > 0.0001f)
+            {
+                agent.Move(Vector3.ClampMagnitude(push, 1f) * definition.moveSpeed * 0.5f * dt);
+            }
         }
 
         private void UpdateAutoEngage()

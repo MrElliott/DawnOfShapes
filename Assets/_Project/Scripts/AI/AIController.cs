@@ -19,6 +19,7 @@ namespace DawnOfShapes.AI
         private readonly List<Unit> myUnits = new List<Unit>();
         private readonly HashSet<Unit> holding = new HashSet<Unit>();
         private int playerId;
+        private UnitDefinition nextUnit;
         private float thinkTimer;
         private MatchManager match;
         private PlayerState state;
@@ -87,8 +88,16 @@ namespace DawnOfShapes.AI
             var baseB = state.Base;
             if (baseB.Queue.Count >= 2) return;
             int queuedPop = baseB.Queue.Sum(d => d.popCost);
+            // Commit to one choice and save for it, so expensive units get built as often as cheap ones.
+            if (nextUnit == null) nextUnit = PickUnit();
+            if (nextUnit == null) return;
+            if (match.HasPopRoom(playerId, nextUnit.popCost + queuedPop) && baseB.TryQueue(nextUnit)) nextUnit = null;
+        }
+
+        private UnitDefinition PickUnit()
+        {
             var options = state.Faction.Units.Where(u => u.producible).ToList();
-            if (options.Count == 0) return;
+            if (options.Count == 0) return null;
 
             int builders = myUnits.Count(u => u.Definition.canBuildWalls);
             float total = 0f;
@@ -98,21 +107,15 @@ namespace DawnOfShapes.AI
                 weights[i] = options[i].canBuildWalls ? (builders < 2 ? 0.4f : 0f) : 1f;
                 total += weights[i];
             }
-            if (total <= 0f) return;
+            if (total <= 0f) return null;
 
             float roll = Random.value * total;
-            UnitDefinition pick = options[0];
             for (int i = 0; i < options.Count; i++)
             {
                 roll -= weights[i];
-                if (roll <= 0f)
-                {
-                    pick = options[i];
-                    break;
-                }
+                if (roll <= 0f) return options[i];
             }
-
-            if (match.HasPopRoom(playerId, pick.popCost + queuedPop)) baseB.TryQueue(pick);
+            return options[options.Count - 1];
         }
 
         private bool Defend()
@@ -132,10 +135,8 @@ namespace DawnOfShapes.AI
             }
             if (threat == null) return false;
 
-            foreach (var u in myUnits)
-            {
-                if (u.FlatDistanceTo(basePos) < 80f && u.CurrentTarget == null) u.CommandAttackMove(threat.transform.position);
-            }
+            var defenders = myUnits.Where(u => u.FlatDistanceTo(basePos) < 80f && u.CurrentTarget == null).ToList();
+            Formation.Order(defenders, threat.transform.position, threat.transform.position - basePos, true);
             return true;
         }
 
@@ -207,11 +208,7 @@ namespace DawnOfShapes.AI
                 target = enemy.Base.transform.position;
             }
 
-            for (int i = 0; i < idle.Count; i++)
-            {
-                Vector2 jitter = Random.insideUnitCircle * 3f;
-                idle[i].CommandAttackMove(target + new Vector3(jitter.x, 0f, jitter.y));
-            }
+            Formation.Order(idle, target, target - centroid, true);
         }
     }
 }

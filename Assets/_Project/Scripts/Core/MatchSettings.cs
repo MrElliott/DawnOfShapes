@@ -28,16 +28,17 @@ namespace DawnOfShapes.Core
 
         [Header("Buildings")]
         public float baseMaxHealth = 4000f;
-        public float baseArmour = 5f;
+        [Tooltip("Armour values are percentage damage reduction.")]
+        public float baseArmour = 35f;
         public Vector3 baseSize = new Vector3(7f, 5f, 7f);
         public float researchBuildingHealth = 600f;
-        public float researchBuildingArmour = 3f;
+        public float researchBuildingArmour = 25f;
         public Vector3 researchBuildingSize = new Vector3(4f, 5f, 4f);
 
         [Header("Walls")]
         public int wallCost = 25;
         public float wallHealth = 300f;
-        public float wallArmour = 6f;
+        public float wallArmour = 50f;
         public Vector3 wallSize = new Vector3(4f, 1.8f, 1f);
     }
 }

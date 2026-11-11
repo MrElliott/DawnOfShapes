@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Cubes_ReinforcedPlating
   m_EditorClassIdentifier: Assembly-CSharp::DawnOfShapes.Factions.UpgradeDefinition
   displayName: Reinforced Plating
-  description: +3 armour for all units.
+  description: +15% armour for all units.
   type: 0
-  amount: 3
+  amount: 15
   cost: 120
   researchTime: 25

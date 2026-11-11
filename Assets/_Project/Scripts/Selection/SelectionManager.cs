@@ -22,7 +22,6 @@ namespace DawnOfShapes.Selection
     {
         [SerializeField] private Camera targetCamera;
         [SerializeField] private float dragThreshold = 6f;
-        [SerializeField] private float formationSpacing = 2.5f;
         [SerializeField] private Color boxFill = new Color(0.4f, 0.8f, 1f, 0.15f);
         [SerializeField] private Color boxBorder = new Color(0.4f, 0.8f, 1f, 0.9f);
 
@@ -205,19 +204,8 @@ namespace DawnOfShapes.Selection
 
         private void IssueFormation(Vector3 point, bool attackMove)
         {
-            // Simple square formation centred on the clicked point.
-            int columns = Mathf.CeilToInt(Mathf.Sqrt(selected.Count));
-            int rows = Mathf.CeilToInt(selected.Count / (float)columns);
-            Vector3 right = Vector3.ProjectOnPlane(targetCamera.transform.right, Vector3.up).normalized;
-            Vector3 forward = Vector3.Cross(right, Vector3.up);
-            for (int i = 0; i < selected.Count; i++)
-            {
-                float x = (i % columns - (columns - 1) * 0.5f) * formationSpacing;
-                float z = -(i / columns - (rows - 1) * 0.5f) * formationSpacing;
-                Vector3 target = point + right * x + forward * z;
-                if (attackMove) selected[i].CommandAttackMove(target);
-                else selected[i].CommandMove(target);
-            }
+            // Square formation centred on the clicked point, facing away from the camera.
+            Formation.Order(selected, point, targetCamera.transform.forward, attackMove);
         }
 
         private void Select(Unit unit)

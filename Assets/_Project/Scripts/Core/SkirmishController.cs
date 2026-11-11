@@ -11,6 +11,8 @@ namespace DawnOfShapes.Core
     {
         private const float Interval = 0.5f;
         private readonly Dictionary<int, int> alive = new Dictionary<int, int>();
+        private readonly Dictionary<int, Vector3> centres = new Dictionary<int, Vector3>();
+        private readonly Dictionary<int, int> counts = new Dictionary<int, int>();
         private float timer;
 
         private void Update()
@@ -43,9 +45,20 @@ namespace DawnOfShapes.Core
                 return;
             }
 
+            // Keep each unit's offset from its army's centre so the army advances spread out, not as a blob.
+            centres.Clear();
+            counts.Clear();
+            foreach (var u in Unit.AllUnits)
+            {
+                if (u.IsDead) continue;
+                centres[u.TeamId] = (centres.TryGetValue(u.TeamId, out var c) ? c : Vector3.zero) + u.transform.position;
+                counts[u.TeamId] = (counts.TryGetValue(u.TeamId, out int n) ? n : 0) + 1;
+            }
+
             foreach (var u in Unit.AllUnits)
             {
                 if (u.IsDead || !u.IsIdle) continue;
+                Vector3 offset = u.transform.position - centres[u.TeamId] / counts[u.TeamId];
                 Unit nearest = null;
                 float best = float.MaxValue;
                 foreach (var other in Unit.AllUnits)
@@ -58,7 +71,7 @@ namespace DawnOfShapes.Core
                         nearest = other;
                     }
                 }
-                if (nearest != null) u.CommandAttackMove(nearest.transform.position);
+                if (nearest != null) u.CommandAttackMove(nearest.transform.position + Vector3.ClampMagnitude(offset, 12f));
             }
         }
     }

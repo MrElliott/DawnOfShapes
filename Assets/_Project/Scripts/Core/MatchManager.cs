@@ -224,7 +224,7 @@ namespace DawnOfShapes.Core
                 int columns = Mathf.CeilToInt(Mathf.Sqrt(army.Count));
                 for (int u = 0; u < army.Count; u++)
                 {
-                    float spacing = Mathf.Max(2.2f, army[u].Radius * 2f + 0.8f);
+                    float spacing = Mathf.Max(Formation.MinimumSpacing, army[u].Radius * Formation.SpacingPerRadius);
                     Vector3 pos = SkirmishCentre + new Vector3(side * (14f + (u / columns) * spacing), 0f,
                         (u % columns - (columns - 1) * 0.5f) * spacing);
                     UnitFactory.Spawn(army[u], i, pos, facing);

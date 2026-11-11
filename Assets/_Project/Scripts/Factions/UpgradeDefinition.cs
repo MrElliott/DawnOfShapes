@@ -4,7 +4,7 @@ namespace DawnOfShapes.Factions
 {
     public enum UpgradeType
     {
-        /// <summary>Flat armour added to every unit.</summary>
+        /// <summary>Armour percentage points added to every unit (10 = 10% more damage reduction).</summary>
         Armour,
         /// <summary>Fractional damage bonus, 0.2 = +20%.</summary>
         Damage,
