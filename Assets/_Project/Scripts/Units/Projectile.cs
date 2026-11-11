@@ -17,6 +17,7 @@ namespace DawnOfShapes.Units
         private float damage;
         private UnitDefinition source;
         private int teamId;
+        private int ownerPlayerId;
         private float duration;
         private float elapsed;
 
@@ -40,6 +41,7 @@ namespace DawnOfShapes.Units
             p.damage = damage;
             p.source = source;
             p.teamId = teamId;
+            p.ownerPlayerId = ownerPlayerId;
             float distance = Vector3.Distance(from, p.end);
             p.duration = Mathf.Max(0.2f, distance / Mathf.Max(1f, source.projectileSpeed));
         }
@@ -66,11 +68,11 @@ namespace DawnOfShapes.Units
                     if (d <= source.splashRadius) hitBuffer.Add(e);
                 }
                 // Apply after collecting: deaths can spawn units and change Entity.All.
-                foreach (var e in hitBuffer) Unit.DealHit(e, damage, source);
+                foreach (var e in hitBuffer) Unit.DealHit(e, damage, source, ownerPlayerId);
             }
             else if (target != null && !target.IsDead)
             {
-                Unit.DealHit(target, damage, source);
+                Unit.DealHit(target, damage, source, ownerPlayerId);
             }
             Destroy(gameObject);
         }

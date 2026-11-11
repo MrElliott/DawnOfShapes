@@ -29,6 +29,17 @@ namespace DawnOfShapes.Core
         public bool Eliminated { get; set; }
         public string EliminationReason { get; set; }
 
+        public MatchStats Stats { get; } = new MatchStats();
+
+        /// <summary>Spends Form and records it in the stats. Returns false if there is not enough.</summary>
+        public bool TrySpend(float amount)
+        {
+            if (Form < amount) return false;
+            Form -= amount;
+            Stats.FormSpent += amount;
+            return true;
+        }
+
         public BaseBuilding Base { get; set; }
         public ResearchBuilding Research { get; set; }
 

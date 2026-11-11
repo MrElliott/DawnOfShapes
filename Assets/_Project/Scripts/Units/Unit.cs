@@ -271,7 +271,7 @@ namespace DawnOfShapes.Units
             }
             else
             {
-                DealHit(target, Damage, definition);
+                DealHit(target, Damage, definition, OwnerPlayerId);
                 if (definition.range > 2.5f)
                 {
                     Tracer.Show(muzzle, target.transform.position + Vector3.up * 0.6f, color);
@@ -279,18 +279,27 @@ namespace DawnOfShapes.Units
             }
         }
 
-        public static void DealHit(Entity target, float damage, UnitDefinition source)
+        public static void DealHit(Entity target, float damage, UnitDefinition source, int attackerPlayerId)
         {
             if (target == null || target.IsDead) return;
             if (source != null && source.slowAmount > 0f && target is Unit unit)
             {
                 unit.ApplySlow(source.slowAmount, source.slowDuration);
             }
-            target.TakeDamage(damage, null);
+            float dealt = target.TakeDamage(damage);
+
+            var stats = MatchManager.Instance != null ? MatchManager.Instance.GetState(attackerPlayerId)?.Stats : null;
+            if (stats != null && source != null)
+            {
+                string key = MatchStats.UnitKey(source.displayName);
+                stats.AddDamage(key, dealt);
+                if (target.IsDead) stats.Add(stats.Kills, key);
+            }
         }
 
         protected override void Die()
         {
+            state?.Stats.Add(state.Stats.UnitsLost, MatchStats.UnitKey(definition.displayName));
             if (definition.splitInto != null && definition.splitCount > 0)
             {
                 for (int i = 0; i < definition.splitCount; i++)

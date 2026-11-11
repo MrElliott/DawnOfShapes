@@ -1,0 +1,17 @@
+{
+  "_comment": "Proposed changes from the baseline balance run (results/baseline). Not applied to the assets. Test with: ./tools/balance.ps1 -Balance tools/balance/proposed.json",
+  "units": {
+    "BlockTrooper": { "armour": 2, "maxHealth": 240, "cost": 70 },
+    "Roller": { "damage": 11, "maxHealth": 100 },
+    "OrbCluster": { "maxHealth": 220, "damage": 14 },
+    "MiniRoller": { "damage": 7 },
+    "Spire": { "damage": 45, "splashRadius": 2, "cost": 120 },
+    "PrismScout": { "damage": 12 }
+  },
+  "settings": {
+    "captureTime": 15,
+    "dominationHoldTime": 120,
+    "formPerPointPerSecond": 1.5,
+    "baseMaxHealth": 5000
+  }
+}

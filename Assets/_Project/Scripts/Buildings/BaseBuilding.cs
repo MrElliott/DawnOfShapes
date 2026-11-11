@@ -42,8 +42,7 @@ namespace DawnOfShapes.Buildings
 
         public bool TryQueue(UnitDefinition def)
         {
-            if (!CanQueue(def)) return false;
-            state.Form -= CostOf(def);
+            if (!CanQueue(def) || !state.TrySpend(CostOf(def))) return false;
             queue.Add(def);
             return true;
         }
@@ -65,6 +64,7 @@ namespace DawnOfShapes.Buildings
             queue.RemoveAt(0);
             Vector3 spawn = transform.position + transform.forward * (Radius + 1.5f) + transform.right * Random.Range(-2f, 2f);
             var unit = UnitFactory.Spawn(def, OwnerPlayerId, spawn, transform.rotation);
+            state.Stats.Add(state.Stats.UnitsBuilt, MatchStats.UnitKey(def.displayName));
             unit.CommandMove(RallyPoint + new Vector3(Random.Range(-3f, 3f), 0f, Random.Range(-3f, 3f)));
         }
     }

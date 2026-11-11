@@ -39,17 +39,19 @@ namespace DawnOfShapes.Core
 
         public bool IsEnemyOf(Entity other) => other != null && other.TeamId != TeamId;
 
-        public void TakeDamage(float amount, Entity source)
+        /// <summary>Applies damage after armour and returns the health actually removed.</summary>
+        public float TakeDamage(float amount)
         {
-            if (IsDead) return;
+            if (IsDead) return 0f;
             // Armour is flat reduction, but every hit does at least 20% of its damage.
-            float dealt = Mathf.Max(amount * 0.2f, amount - Armour);
+            float dealt = Mathf.Min(Health, Mathf.Max(amount * 0.2f, amount - Armour));
             Health -= dealt;
             if (Health <= 0f)
             {
                 Health = 0f;
                 Die();
             }
+            return dealt;
         }
 
         public float FlatDistanceTo(Vector3 point)

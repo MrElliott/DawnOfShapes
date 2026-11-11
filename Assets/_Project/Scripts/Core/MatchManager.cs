@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using DawnOfShapes.AI;
 using DawnOfShapes.Buildings;
@@ -20,10 +19,15 @@ namespace DawnOfShapes.Core
         GameOver
     }
 
+    public enum MatchMode
+    {
+        Full,
+        Skirmish
+    }
+
     /// <summary>
     /// Owns the match: sets up players from spawn slots, runs the economy and checks win conditions.
-    /// Command line: -autoplay (AI vs AI, quits at game over), -faction N (player 1's faction index),
-    /// -timescale N, -maxSeconds N.
+    /// Also drives headless test runs; see <see cref="LaunchOptions"/> for the command line.
     /// </summary>
     [DefaultExecutionOrder(-50)]
     public class MatchManager : MonoBehaviour
@@ -31,6 +35,9 @@ namespace DawnOfShapes.Core
         // Survive scene reloads so Restart keeps the same faction choice.
         private static int rememberedFaction = -1;
         private static bool skipSetupOnLoad;
+
+        private const float PointSampleInterval = 30f;
+        private static readonly Vector3 SkirmishCentre = new Vector3(0f, 0f, -25f);
 
         [SerializeField] private MatchSettings settings;
         [SerializeField] private GameVisuals visuals;
@@ -41,12 +48,10 @@ namespace DawnOfShapes.Core
         private readonly List<CapturePoint> points = new List<CapturePoint>();
         private readonly List<SpawnSlot> slots = new List<SpawnSlot>();
 
+        private LaunchOptions options;
         private int dominationTeam = -1;
-        private bool autoplay;
-        private float autoplayTimeScale = 1f;
-        private int autoplayFaction = -1;
-        private float maxRealSeconds;
         private float nextStatusLog;
+        private float nextPointSample;
 
         public static MatchManager Instance { get; private set; }
 
@@ -56,12 +61,16 @@ namespace DawnOfShapes.Core
         public IReadOnlyList<PlayerState> States => states;
         public IReadOnlyList<CapturePoint> Points => points;
         public MatchPhase Phase { get; private set; } = MatchPhase.Setup;
+        public MatchMode Mode { get; private set; } = MatchMode.Full;
         public float MatchTime { get; private set; }
         public int WinningTeam { get; private set; } = -1;
+        public string WinCondition { get; private set; }
         public string ResultReason { get; private set; }
         public float DominationTimer { get; private set; }
         public int DominationTeam => dominationTeam;
         public int RememberedFaction => rememberedFaction;
+        public int Seed { get; private set; }
+        public LaunchOptions Options => options;
 
         public event Action<MatchPhase> PhaseChanged;
 
@@ -70,7 +79,16 @@ namespace DawnOfShapes.Core
             Instance = this;
             points.AddRange(FindObjectsByType<CapturePoint>(FindObjectsSortMode.None).OrderBy(p => p.PointId));
             slots.AddRange(FindObjectsByType<SpawnSlot>(FindObjectsSortMode.None).OrderBy(s => s.SlotIndex));
-            ParseCommandLine();
+
+            options = LaunchOptions.FromEnvironment();
+            Seed = options.Seed ?? Environment.TickCount;
+            UnityEngine.Random.InitState(Seed);
+            if (options.BalancePath != null) BalanceOverrides.Apply(options.BalancePath, factions, settings);
+            if (options.IsHeadlessRun)
+            {
+                QualitySettings.vSyncCount = 0;
+                Application.targetFrameRate = -1;
+            }
         }
 
         private void OnDestroy()
@@ -80,40 +98,40 @@ namespace DawnOfShapes.Core
 
         private void Start()
         {
-            if (autoplay) StartMatch(autoplayFaction >= 0 ? autoplayFaction : UnityEngine.Random.Range(0, factions.Count));
-            else if (skipSetupOnLoad && rememberedFaction >= 0) StartMatch(rememberedFaction);
-        }
-
-        private void ParseCommandLine()
-        {
-            var args = Environment.GetCommandLineArgs();
-            for (int i = 0; i < args.Length; i++)
+            if (options.ListUnits)
             {
-                switch (args[i])
-                {
-                    case "-autoplay":
-                        autoplay = true;
-                        break;
-                    case "-timescale" when i + 1 < args.Length:
-                        float.TryParse(args[++i], NumberStyles.Float, CultureInfo.InvariantCulture, out autoplayTimeScale);
-                        break;
-                    case "-faction" when i + 1 < args.Length:
-                        int.TryParse(args[++i], out autoplayFaction);
-                        break;
-                    case "-maxSeconds" when i + 1 < args.Length:
-                        float.TryParse(args[++i], NumberStyles.Float, CultureInfo.InvariantCulture, out maxRealSeconds);
-                        break;
-                }
+                MatchResults.WriteUnitCatalogue(options.ResultsPath, factions);
+                Application.Quit(0);
+            }
+            else if (options.IsSkirmish)
+            {
+                StartSkirmish(options.SkirmishA, options.SkirmishB);
+            }
+            else if (options.Autoplay)
+            {
+                int local = FindFaction(options.Faction);
+                StartMatch(local >= 0 ? local : UnityEngine.Random.Range(0, factions.Count), FindFaction(options.Opponent));
+            }
+            else if (skipSetupOnLoad && rememberedFaction >= 0)
+            {
+                StartMatch(rememberedFaction);
             }
         }
 
         // ---- Setup ----
 
+        public int FindFaction(string nameOrIndex)
+        {
+            if (string.IsNullOrEmpty(nameOrIndex)) return -1;
+            if (int.TryParse(nameOrIndex, out int index)) return index >= 0 && index < factions.Count ? index : -1;
+            return factions.FindIndex(f => BalanceOverrides.Matches(nameOrIndex, f.FactionName, f.name));
+        }
+
         /// <summary>
-        /// Starts a match with the local player on the given faction. Every other spawn slot gets an AI
-        /// on a different faction (cycling if there are more slots than factions).
+        /// Starts a match with the local player on the given faction. Every other spawn slot gets an AI on a
+        /// different faction (the first one on <paramref name="opponentFactionIndex"/> when given).
         /// </summary>
-        public void StartMatch(int localFactionIndex)
+        public void StartMatch(int localFactionIndex, int opponentFactionIndex = -1)
         {
             if (Phase != MatchPhase.Setup || factions.Count == 0 || slots.Count == 0) return;
             localFactionIndex = Mathf.Clamp(localFactionIndex, 0, factions.Count - 1);
@@ -121,13 +139,18 @@ namespace DawnOfShapes.Core
 
             var others = Enumerable.Range(0, factions.Count).Where(i => i != localFactionIndex)
                 .OrderBy(_ => UnityEngine.Random.value).ToList();
+            if (opponentFactionIndex >= 0)
+            {
+                others.Remove(opponentFactionIndex);
+                others.Insert(0, opponentFactionIndex);
+            }
             if (others.Count == 0) others.Add(localFactionIndex);
 
             var players = new List<Player>();
             for (int i = 0; i < slots.Count; i++)
             {
                 var faction = factions[i == 0 ? localFactionIndex : others[(i - 1) % others.Count]];
-                bool human = i == 0 && !autoplay;
+                bool human = i == 0 && !options.Autoplay;
                 string label = human ? "You" : $"AI {i}";
                 players.Add(new Player(i, i, $"{label} ({faction.FactionName})", faction, slots[i].SlotIndex, human));
             }
@@ -164,10 +187,91 @@ namespace DawnOfShapes.Core
                 cameraRig.JumpTo(local.Base.transform.position + local.Base.transform.forward * 12f, local.Base.transform.eulerAngles.y);
             }
 
-            Time.timeScale = autoplay ? autoplayTimeScale : 1f;
+            Mode = MatchMode.Full;
+            BeginPlaying();
+            Debug.Log($"[DawnOfShapes] Match started (seed {Seed}): {string.Join(" vs ", players.Select(p => p.DisplayName))}");
+        }
+
+        /// <summary>
+        /// Two fixed armies on open ground with no economy, fighting until one side has no units left.
+        /// </summary>
+        public void StartSkirmish(string armyA, string armyB)
+        {
+            if (Phase != MatchPhase.Setup) return;
+            var armies = new[] { ParseArmy(armyA), ParseArmy(armyB) };
+            if (armies[0].Count == 0 || armies[1].Count == 0)
+            {
+                Debug.LogError($"[DawnOfShapes] Skirmish armies could not be parsed: '{armyA}' vs '{armyB}'");
+                Application.Quit(2);
+                return;
+            }
+
+            var players = new List<Player>();
+            for (int i = 0; i < 2; i++)
+            {
+                var faction = factions.FirstOrDefault(f => f.Units.Contains(armies[i][0])) ?? factions[0];
+                players.Add(new Player(i, i, $"Army {(char)('A' + i)} ({(i == 0 ? armyA : armyB)})", faction, 0, false));
+            }
+            PlayerRegistry.Instance.SetPlayers(players, 0);
+
+            for (int i = 0; i < 2; i++)
+            {
+                var state = new PlayerState(players[i], 0f, settings.startingVictoryPoints);
+                states.Add(state);
+                float side = i == 0 ? -1f : 1f;
+                Quaternion facing = Quaternion.LookRotation(new Vector3(-side, 0f, 0f));
+                var army = armies[i];
+                int columns = Mathf.CeilToInt(Mathf.Sqrt(army.Count));
+                for (int u = 0; u < army.Count; u++)
+                {
+                    float spacing = Mathf.Max(2.2f, army[u].Radius * 2f + 0.8f);
+                    Vector3 pos = SkirmishCentre + new Vector3(side * (14f + (u / columns) * spacing), 0f,
+                        (u % columns - (columns - 1) * 0.5f) * spacing);
+                    UnitFactory.Spawn(army[u], i, pos, facing);
+                    state.Stats.Add(state.Stats.UnitsBuilt, MatchStats.UnitKey(army[u].displayName));
+                    state.Stats.FormSpent += army[u].cost;
+                }
+            }
+
+            gameObject.AddComponent<SkirmishController>();
+            Mode = MatchMode.Skirmish;
+            BeginPlaying();
+            Debug.Log($"[DawnOfShapes] Skirmish started (seed {Seed}): {armyA} vs {armyB}");
+        }
+
+        /// <summary>Parses "Unit:N,Unit:@Form" into a flat list of unit definitions.</summary>
+        public List<UnitDefinition> ParseArmy(string spec)
+        {
+            var result = new List<UnitDefinition>();
+            var catalogue = BalanceOverrides.AllUnits(factions);
+            foreach (var part in spec.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                var bits = part.Split(':');
+                var def = catalogue.Find(u => BalanceOverrides.Matches(bits[0].Trim(), u.displayName, u.name));
+                if (def == null)
+                {
+                    Debug.LogError($"[DawnOfShapes] Unknown unit '{bits[0]}' in army '{spec}'");
+                    continue;
+                }
+                int count = 1;
+                if (bits.Length > 1)
+                {
+                    string n = bits[1].Trim();
+                    if (n.StartsWith("@") && float.TryParse(n.Substring(1), out float budget))
+                        count = Mathf.Max(1, Mathf.RoundToInt(budget / Mathf.Max(1, def.cost)));
+                    else int.TryParse(n, out count);
+                }
+                for (int i = 0; i < count; i++) result.Add(def);
+            }
+            return result;
+        }
+
+        private void BeginPlaying()
+        {
+            Time.timeScale = options.IsHeadlessRun ? options.TimeScale : 1f;
             MatchTime = 0f;
+            nextPointSample = 0f;
             SetPhase(MatchPhase.Playing);
-            Debug.Log($"[DawnOfShapes] Match started: {string.Join(" vs ", players.Select(p => p.DisplayName))}");
         }
 
         private Vector3 MapCentre()
@@ -220,7 +324,7 @@ namespace DawnOfShapes.Core
         {
             if (!CanBuildResearch(playerId)) return false;
             var s = GetState(playerId);
-            s.Form -= s.Faction.ResearchBuildingCost;
+            s.TrySpend(s.Faction.ResearchBuildingCost);
             Transform b = s.Base.transform;
             Vector3 pos = b.position + b.right * (s.Base.Radius + settings.researchBuildingSize.x * 0.5f + 5f) - b.forward * 2f;
             s.Research = BuildingFactory.SpawnResearch(s, settings, pos, b.rotation);
@@ -230,8 +334,7 @@ namespace DawnOfShapes.Core
         public bool TryBuildWall(Unit builder, Vector3 point)
         {
             var s = GetState(builder.OwnerPlayerId);
-            if (s == null || s.Form < settings.wallCost) return false;
-            s.Form -= settings.wallCost;
+            if (s == null || !s.TrySpend(settings.wallCost)) return false;
             Vector3 dir = point - builder.transform.position;
             dir.y = 0f;
             Quaternion rot = Quaternion.LookRotation(dir.sqrMagnitude > 0.01f ? dir.normalized : builder.transform.forward);
@@ -261,17 +364,22 @@ namespace DawnOfShapes.Core
 
         private void Update()
         {
-            if (autoplay && maxRealSeconds > 0f && Time.realtimeSinceStartup > maxRealSeconds)
+            if (options.MaxRealSeconds > 0f && options.IsHeadlessRun && Phase == MatchPhase.Playing
+                && Time.realtimeSinceStartup > options.MaxRealSeconds)
             {
-                Debug.Log($"[DawnOfShapes] Autoplay time limit reached at match time {MatchTime:F0}s with no winner.");
-                LogStatus();
-                Application.Quit(0);
+                EndMatch(-1, "timeout", "Real-time limit reached");
                 return;
             }
             if (Phase != MatchPhase.Playing) return;
 
             float dt = Time.deltaTime;
             MatchTime += dt;
+            if (options.MaxMatchTime > 0f && MatchTime >= options.MaxMatchTime)
+            {
+                EndMatch(-1, "timeout", "Match time limit reached");
+                return;
+            }
+            if (Mode == MatchMode.Skirmish) return;
 
             foreach (var point in points) point.Tick(dt, settings.captureTime);
 
@@ -280,6 +388,13 @@ namespace DawnOfShapes.Core
                 if (s.Eliminated) continue;
                 s.FormPerSecond = settings.baseFormPerSecond + settings.formPerPointPerSecond * PointsHeldBy(s.PlayerId);
                 s.Form += s.FormPerSecond * dt;
+                s.Stats.FormEarned += s.FormPerSecond * dt;
+            }
+
+            if (MatchTime >= nextPointSample)
+            {
+                nextPointSample += PointSampleInterval;
+                foreach (var s in states) s.Stats.PointsHeldSamples.Add(PointsHeldBy(s.PlayerId));
             }
 
             // Victory points: every held point drains each enemy player.
@@ -296,13 +411,13 @@ namespace DawnOfShapes.Core
             }
             foreach (var s in states)
             {
-                if (!s.Eliminated && s.VictoryPoints <= 0f) Eliminate(s, "ran out of victory points");
+                if (!s.Eliminated && s.VictoryPoints <= 0f) Eliminate(s, "victory_points");
             }
 
             UpdateDomination(dt);
             CheckLastTeamStanding();
 
-            if (autoplay && MatchTime >= nextStatusLog)
+            if (options.Autoplay && MatchTime >= nextStatusLog)
             {
                 nextStatusLog += 60f;
                 LogStatus();
@@ -334,23 +449,23 @@ namespace DawnOfShapes.Core
                 DominationTimer = 0f;
             }
             DominationTimer += dt;
-            if (DominationTimer >= settings.dominationHoldTime) EndMatch(team, "Domination: held every capture point");
+            if (DominationTimer >= settings.dominationHoldTime) EndMatch(team, "domination", "Domination: held every capture point");
         }
 
         public void OnEntityDied(Entity entity)
         {
-            if (entity is BaseBuilding building)
+            if (Mode == MatchMode.Full && entity is BaseBuilding building)
             {
                 var s = GetState(building.OwnerPlayerId);
-                if (s != null && !s.Eliminated) Eliminate(s, "base destroyed");
+                if (s != null && !s.Eliminated) Eliminate(s, "annihilation");
             }
         }
 
-        private void Eliminate(PlayerState s, string reason)
+        private void Eliminate(PlayerState s, string condition)
         {
             s.Eliminated = true;
-            s.EliminationReason = reason;
-            Debug.Log($"[DawnOfShapes] {s.Player.DisplayName} eliminated at {MatchTime:F0}s: {reason}.");
+            s.EliminationReason = condition;
+            Debug.Log($"[DawnOfShapes] {s.Player.DisplayName} eliminated at {MatchTime:F0}s: {condition}.");
             CheckLastTeamStanding();
         }
 
@@ -360,26 +475,32 @@ namespace DawnOfShapes.Core
             var teams = states.Where(s => !s.Eliminated).Select(s => s.TeamId).Distinct().ToList();
             if (teams.Count > 1) return;
 
-            string reason = "last team standing";
             var loser = states.FirstOrDefault(s => s.Eliminated && s.EliminationReason != null);
-            if (loser != null)
-            {
-                reason = loser.EliminationReason == "base destroyed" ? "Annihilation: enemy base destroyed" : "Victory points: enemy score reached zero";
-            }
-            EndMatch(teams.Count == 1 ? teams[0] : -1, reason);
+            string condition = loser != null ? loser.EliminationReason : "last_team_standing";
+            string reason = condition == "annihilation" ? "Annihilation: enemy base destroyed"
+                : condition == "victory_points" ? "Victory points: enemy score reached zero" : "Last team standing";
+            EndMatch(teams.Count == 1 ? teams[0] : -1, condition, reason);
         }
 
-        private void EndMatch(int winningTeam, string reason)
+        /// <summary>Called by SkirmishController when one side has no units left.</summary>
+        public void EndSkirmish(int winningTeam)
+        {
+            EndMatch(winningTeam, winningTeam >= 0 ? "elimination" : "draw", winningTeam >= 0 ? "Army destroyed" : "Both armies destroyed");
+        }
+
+        private void EndMatch(int winningTeam, string condition, string reason)
         {
             if (Phase == MatchPhase.GameOver) return;
             WinningTeam = winningTeam;
+            WinCondition = condition;
             ResultReason = reason;
             SetPhase(MatchPhase.GameOver);
             string winners = string.Join(", ", states.Where(s => s.TeamId == winningTeam).Select(s => s.Player.DisplayName));
             Debug.Log($"[DawnOfShapes] Match over at {MatchTime:F0}s. Winner: {(winners.Length > 0 ? winners : "none")} ({reason}).");
-            LogStatus();
+            if (Mode == MatchMode.Full) LogStatus();
 
-            if (autoplay) Application.Quit(0);
+            if (options.ResultsPath != null) MatchResults.Write(options.ResultsPath, this);
+            if (options.IsHeadlessRun) Application.Quit(0);
             else Time.timeScale = 0f;
         }
 

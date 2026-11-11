@@ -35,8 +35,7 @@ namespace DawnOfShapes.Buildings
 
         public bool TryResearch(UpgradeDefinition upgrade)
         {
-            if (!CanResearch(upgrade)) return false;
-            state.Form -= upgrade.cost;
+            if (!CanResearch(upgrade) || !state.TrySpend(upgrade.cost)) return false;
             Current = upgrade;
             progress = 0f;
             return true;
@@ -52,6 +51,7 @@ namespace DawnOfShapes.Buildings
             if (progress >= Current.researchTime)
             {
                 state.AddUpgrade(Current);
+                state.Stats.Upgrades.Add($"{Current.displayName}@{match.MatchTime:F0}s");
                 Debug.Log($"[DawnOfShapes] {state.Player.DisplayName} researched {Current.displayName}.");
                 Current = null;
             }
