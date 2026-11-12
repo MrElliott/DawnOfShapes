@@ -17,7 +17,7 @@ MonoBehaviour:
   mesh: {fileID: 4300000, guid: fb3e5c5d82cc22f4f80dfa86a353f92c, type: 2}
   scale: {x: 1.1, y: 1.1, z: 1.1}
   producible: 1
-  cost: 40
+  cost: 35
   buildTime: 7
   popCost: 1
   maxHealth: 90
@@ -28,7 +28,7 @@ MonoBehaviour:
   acquireRange: 14
   projectileSpeed: 0
   splashRadius: 0
-  moveSpeed: 8
+  moveSpeed: 10
   slowAmount: 0
   slowDuration: 0
   canBuildWalls: 0

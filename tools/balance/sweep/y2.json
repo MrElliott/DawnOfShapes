@@ -1,0 +1,1 @@
+{ "settings": { "captureTime": 30, "dominationHoldTime": 300, "formPerPointPerSecond": 1.0, "baseFormPerSecond": 1.5, "baseUnitCap": 12, "unitCapPerPoint": 2, "baseMaxHealth": 20000, "baseArmour": 60, "victoryPointDrainPerPoint": 0.25 }, "units": { "OrbCluster": { "maxHealth": 240 }, "Spire": { "splashRadius": 2 }, "Roller": { "cost": 35 }, "BlockTrooper": { "damage": 15 } } }

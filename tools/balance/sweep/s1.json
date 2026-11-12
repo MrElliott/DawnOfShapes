@@ -1,0 +1,1 @@
+{ "settings": { "captureTime": 20, "dominationHoldTime": 180, "formPerPointPerSecond": 1.5, "baseMaxHealth": 6000, "victoryPointDrainPerPoint": 0.35 } }

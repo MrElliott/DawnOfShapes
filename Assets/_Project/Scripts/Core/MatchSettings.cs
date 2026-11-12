@@ -9,27 +9,27 @@ namespace DawnOfShapes.Core
     public class MatchSettings : ScriptableObject
     {
         [Header("Capture points")]
-        public float captureTime = 10f;
+        public float captureTime = 30f;
 
         [Header("Economy")]
         public float startingForm = 150f;
-        public float formPerPointPerSecond = 2f;
-        public float baseFormPerSecond = 0.5f;
-        public int baseUnitCap = 8;
-        public int unitCapPerPoint = 3;
+        public float formPerPointPerSecond = 1f;
+        public float baseFormPerSecond = 1.5f;
+        public int baseUnitCap = 12;
+        public int unitCapPerPoint = 2;
         public int maxQueueLength = 5;
 
         [Header("Win conditions")]
         [Tooltip("Seconds one team must hold every capture point to win.")]
-        public float dominationHoldTime = 60f;
+        public float dominationHoldTime = 300f;
         public float startingVictoryPoints = 1000f;
         [Tooltip("Victory points drained from each enemy player per second, per capture point held.")]
-        public float victoryPointDrainPerPoint = 0.5f;
+        public float victoryPointDrainPerPoint = 0.25f;
 
         [Header("Buildings")]
-        public float baseMaxHealth = 4000f;
+        public float baseMaxHealth = 20000f;
         [Tooltip("Armour values are percentage damage reduction.")]
-        public float baseArmour = 35f;
+        public float baseArmour = 60f;
         public Vector3 baseSize = new Vector3(7f, 5f, 7f);
         public float researchBuildingHealth = 600f;
         public float researchBuildingArmour = 25f;

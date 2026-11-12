@@ -130,15 +130,15 @@ namespace DawnOfShapes.EditorTools
             var roller = EnsureUnit("Spheres_Roller", u =>
             {
                 Set(u, "Roller", "Fast, cheap skirmisher. Flanks and chases.", data.Icosphere, new Vector3(1.1f, 1.1f, 1.1f));
-                u.cost = 40; u.buildTime = 7f;
+                u.cost = 35; u.buildTime = 7f;
                 u.maxHealth = 90f; u.damage = 9f; u.range = 6f; u.attackCooldown = 0.7f;
-                u.acquireRange = 14f; u.moveSpeed = 8f;
+                u.acquireRange = 14f; u.moveSpeed = 10f;
             });
             var orb = EnsureUnit("Spheres_OrbCluster", u =>
             {
                 Set(u, "Orb Cluster", "Bursts into three Mini Rollers when destroyed.", data.Icosphere, new Vector3(1.7f, 1.7f, 1.7f));
                 u.cost = 90; u.buildTime = 14f;
-                u.maxHealth = 180f; u.damage = 12f; u.range = 5f; u.attackCooldown = 1f;
+                u.maxHealth = 290f; u.damage = 12f; u.range = 5f; u.attackCooldown = 1f;
                 u.acquireRange = 12f; u.moveSpeed = 6f;
                 u.splitInto = miniRoller; u.splitCount = 3;
             });
@@ -149,7 +149,7 @@ namespace DawnOfShapes.EditorTools
                 Set(u, "Spire", "Long-range artillery with splash damage. Fragile up close.", data.Pyramid, new Vector3(1.3f, 2.6f, 1.3f));
                 u.cost = 110; u.buildTime = 16f;
                 u.maxHealth = 130f; u.damage = 55f; u.range = 18f; u.attackCooldown = 2.6f;
-                u.acquireRange = 20f; u.moveSpeed = 3.2f; u.projectileSpeed = 18f; u.splashRadius = 3f;
+                u.acquireRange = 20f; u.moveSpeed = 3.2f; u.projectileSpeed = 18f; u.splashRadius = 2f;
             });
             var scout = EnsureUnit("Pyramids_PrismScout", u =>
             {

@@ -12,18 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e69acc1ddb556334ba0941531b1988c1, type: 3}
   m_Name: MatchSettings
   m_EditorClassIdentifier: Assembly-CSharp::DawnOfShapes.Core.MatchSettings
-  captureTime: 10
+  captureTime: 30
   startingForm: 150
-  formPerPointPerSecond: 2
-  baseFormPerSecond: 0.5
-  baseUnitCap: 8
-  unitCapPerPoint: 3
+  formPerPointPerSecond: 1
+  baseFormPerSecond: 1.5
+  baseUnitCap: 12
+  unitCapPerPoint: 2
   maxQueueLength: 5
-  dominationHoldTime: 60
+  dominationHoldTime: 300
   startingVictoryPoints: 1000
-  victoryPointDrainPerPoint: 0.5
-  baseMaxHealth: 4000
-  baseArmour: 35
+  victoryPointDrainPerPoint: 0.25
+  baseMaxHealth: 20000
+  baseArmour: 60
   baseSize: {x: 7, y: 5, z: 7}
   researchBuildingHealth: 600
   researchBuildingArmour: 25

@@ -27,7 +27,7 @@ MonoBehaviour:
   attackCooldown: 2.6
   acquireRange: 20
   projectileSpeed: 18
-  splashRadius: 3
+  splashRadius: 2
   moveSpeed: 3.2
   slowAmount: 0
   slowDuration: 0
