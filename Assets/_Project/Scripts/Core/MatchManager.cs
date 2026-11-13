@@ -57,6 +57,8 @@ namespace DawnOfShapes.Core
 
         public MatchSettings Settings => settings;
         public GameVisuals Visuals => visuals;
+        /// <summary>Runtime copy of the counter matrix, with any balance overrides applied.</summary>
+        public CounterMatrix Counters { get; private set; }
         public IReadOnlyList<FactionDefinition> Factions => factions;
         public IReadOnlyList<PlayerState> States => states;
         public IReadOnlyList<CapturePoint> Points => points;
@@ -83,11 +85,28 @@ namespace DawnOfShapes.Core
             options = LaunchOptions.FromEnvironment();
             Seed = options.Seed ?? Environment.TickCount;
             UnityEngine.Random.InitState(Seed);
-            if (options.BalancePath != null) BalanceOverrides.Apply(options.BalancePath, factions, settings);
+            Counters = settings.counters != null ? Instantiate(settings.counters) : ScriptableObject.CreateInstance<CounterMatrix>();
+            if (options.BalancePath != null) BalanceOverrides.Apply(options.BalancePath, factions, settings, Counters);
+            ResolveUnitShapes();
+            Debug.Log($"[DawnOfShapes] Counter matrix {Counters}");
             if (options.IsHeadlessRun)
             {
                 QualitySettings.vSyncCount = 0;
                 Application.targetFrameRate = -1;
+            }
+        }
+
+        /// <summary>Gives every unit its effective counter shape (its own class, or its faction's shape).</summary>
+        private void ResolveUnitShapes()
+        {
+            foreach (var f in factions)
+            {
+                foreach (var u in f.Units)
+                {
+                    if (u == null) continue;
+                    u.ResolveShape(f.Shape);
+                    if (u.splitInto != null) u.splitInto.ResolveShape(f.Shape);
+                }
             }
         }
 

@@ -19,7 +19,7 @@ namespace DawnOfShapes.UI
         [SerializeField] private Camera targetCamera;
 
         private readonly List<Rect> blockingRects = new List<Rect>();
-        private GUIStyle panel, title, label, small, button, centred, big;
+        private GUIStyle panel, title, label, small, button, centred, big, counter;
         private float scale = 1f;
 
         public static HUD Instance { get; private set; }
@@ -59,7 +59,7 @@ namespace DawnOfShapes.UI
         private float W => Screen.width / scale;
         private float H => Screen.height / scale;
         private Rect TopBar => new Rect(0f, 0f, W, 64f);
-        private Rect SelectionPanel => new Rect(10f, H - 170f, 330f, 160f);
+        private Rect SelectionPanel => new Rect(10f, H - 195f, 360f, 185f);
         private Rect CommandPanel => new Rect(W - 450f, H - 300f, 440f, 290f);
 
         private void LateUpdate()
@@ -204,17 +204,27 @@ namespace DawnOfShapes.UI
                 var u = sel[0];
                 var d = u.Definition;
                 GUI.Label(new Rect(r.x + 12f, r.y + 8f, r.width - 24f, 26f), d.displayName, title);
-                GUI.Label(new Rect(r.x + 12f, r.y + 36f, r.width - 24f, 110f),
+                GUI.Label(new Rect(r.x + 12f, r.y + 36f, r.width - 24f, 66f),
                     $"HP {u.Health:F0} / {u.MaxHealth:F0}    Armour {u.Armour:F0}%\n" +
                     $"Damage {u.Damage:F0} every {d.attackCooldown:F1}s    Range {d.range:F0} m\n" +
-                    $"Speed {u.Speed:F1}{(u.IsSlowed ? " (slowed)" : "")}    Order {u.Order}\n" +
-                    d.description, small);
+                    $"Speed {u.Speed:F1}{(u.IsSlowed ? " (slowed)" : "")}    Order {u.Order}", small);
+                if (Match.Counters != null)
+                {
+                    GUI.Label(new Rect(r.x + 12f, r.y + 102f, r.width - 24f, 20f),
+                        $"{d.Shape}: {Match.Counters.Describe(d.Shape)}", counter);
+                }
+                GUI.Label(new Rect(r.x + 12f, r.y + 124f, r.width - 24f, 52f), d.description, small);
                 return;
             }
 
             GUI.Label(new Rect(r.x + 12f, r.y + 8f, r.width - 24f, 26f), $"{sel.Count} units selected", title);
             string groups = string.Join("\n", sel.GroupBy(u => u.Definition.displayName)
                 .Select(g => $"{g.Count()} × {g.Key}   ({g.Sum(u => u.Health):F0} HP)"));
+            var shapes = sel.Select(u => u.Definition.Shape).Distinct().ToList();
+            if (shapes.Count == 1 && Match.Counters != null)
+            {
+                GUI.Label(new Rect(r.x + 12f, r.yMax - 28f, r.width - 24f, 20f), Match.Counters.Describe(shapes[0]), counter);
+            }
             GUI.Label(new Rect(r.x + 12f, r.y + 38f, r.width - 24f, 110f), groups, small);
         }
 
@@ -236,8 +246,9 @@ namespace DawnOfShapes.UI
             {
                 var def = producible[i];
                 GUI.enabled = baseB.CanQueue(def);
+                string counterTip = Match.Counters != null ? def.displayName + ": " + Match.Counters.Describe(def.Shape) : "";
                 if (GUI.Button(new Rect(r.x + 12f + i * (bw + 8f), y, bw, 42f),
-                        $"{def.displayName}\n{baseB.CostOf(def)} Form · {baseB.BuildTimeOf(def):F0}s", button))
+                        new GUIContent($"{def.displayName}\n{baseB.CostOf(def)} Form · {baseB.BuildTimeOf(def):F0}s", counterTip), button))
                 {
                     baseB.TryQueue(def);
                 }
@@ -272,6 +283,7 @@ namespace DawnOfShapes.UI
                 }
                 GUI.enabled = true;
                 y += 46f;
+                if (!string.IsNullOrEmpty(GUI.tooltip)) GUI.Label(new Rect(r.x + 12f, y, r.width - 24f, 20f), GUI.tooltip, small);
             }
             else
             {
@@ -365,6 +377,7 @@ namespace DawnOfShapes.UI
             centred = new GUIStyle(label) { alignment = TextAnchor.MiddleCenter, wordWrap = true };
             big = new GUIStyle(title) { fontSize = 36, alignment = TextAnchor.MiddleCenter };
             button = new GUIStyle(GUI.skin.button) { fontSize = 13, wordWrap = true };
+            counter = new GUIStyle(small) { fontStyle = FontStyle.Bold, wordWrap = false, normal = { textColor = new Color(1f, 0.85f, 0.45f) } };
         }
     }
 }

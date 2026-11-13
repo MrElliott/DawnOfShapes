@@ -32,3 +32,4 @@ MonoBehaviour:
   wallHealth: 300
   wallArmour: 50
   wallSize: {x: 4, y: 1.8, z: 1}
+  counters: {fileID: 11400000, guid: 3bfb55a267959ac48984a6ee9da465bf, type: 2}

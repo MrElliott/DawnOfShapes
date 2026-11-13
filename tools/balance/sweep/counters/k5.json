@@ -1,0 +1,4 @@
+{ "counters": { "matrix": {
+  "Cube":    { "Cube": 1.0,  "Sphere": 1.03, "Pyramid": 0.9 },
+  "Sphere":  { "Cube": 0.98, "Sphere": 1.0,  "Pyramid": 1.12 },
+  "Pyramid": { "Cube": 1.2,  "Sphere": 0.94, "Pyramid": 1.0 } } } }

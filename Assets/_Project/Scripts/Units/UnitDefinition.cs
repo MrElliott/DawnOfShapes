@@ -1,7 +1,17 @@
+using DawnOfShapes.Factions;
 using UnityEngine;
 
 namespace DawnOfShapes.Units
 {
+    /// <summary>Counter class of a unit. FactionDefault uses the shape of the faction that fields it.</summary>
+    public enum UnitShape
+    {
+        FactionDefault,
+        Cube,
+        Sphere,
+        Pyramid
+    }
+
     /// <summary>
     /// Stats and visuals for one unit type. Tune values in the inspector.
     /// </summary>
@@ -43,6 +53,20 @@ namespace DawnOfShapes.Units
         public bool canBuildWalls;
         public UnitDefinition splitInto;
         public int splitCount;
+
+        [Header("Counters")]
+        [Tooltip("Shape class used by the counter matrix. FactionDefault takes the owning faction's shape.")]
+        public UnitShape shapeClass = UnitShape.FactionDefault;
+
+        [System.NonSerialized] private ShapeType resolvedShape;
+
+        /// <summary>Effective counter shape; set by <see cref="ResolveShape"/> when the match loads.</summary>
+        public ShapeType Shape => resolvedShape;
+
+        public void ResolveShape(ShapeType factionShape)
+        {
+            resolvedShape = shapeClass == UnitShape.FactionDefault ? factionShape : (ShapeType)((int)shapeClass - 1);
+        }
 
         public float Radius => Mathf.Max(scale.x, scale.z) * 0.5f;
     }

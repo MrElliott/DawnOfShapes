@@ -1,3 +1,4 @@
+using DawnOfShapes.Factions;
 using UnityEngine;
 
 namespace DawnOfShapes.Core
@@ -40,5 +41,9 @@ namespace DawnOfShapes.Core
         public float wallHealth = 300f;
         public float wallArmour = 50f;
         public Vector3 wallSize = new Vector3(4f, 1.8f, 1f);
+
+        [Header("Counters")]
+        [Tooltip("Shape counter damage multipliers. A default cycle is used when empty.")]
+        public CounterMatrix counters;
     }
 }

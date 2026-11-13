@@ -42,13 +42,14 @@ namespace DawnOfShapes.Core
         /// <summary>Highest damage reduction armour can reach, in percent.</summary>
         public const float MaxArmour = 75f;
 
-        /// <summary>Applies damage after armour and returns the health actually removed.</summary>
-        public float TakeDamage(float amount)
+        /// <summary>Applies damage after armour, then <paramref name="multiplier"/> (shape counters), and returns
+        /// the health actually removed.</summary>
+        public float TakeDamage(float amount, float multiplier = 1f)
         {
             if (IsDead) return 0f;
             // Armour is a percentage damage reduction, so it scales the same against small and large hits.
             float reduction = Mathf.Clamp(Armour, 0f, MaxArmour) / 100f;
-            float dealt = Mathf.Min(Health, amount * (1f - reduction));
+            float dealt = Mathf.Min(Health, amount * (1f - reduction) * multiplier);
             Health -= dealt;
             if (Health <= 0f)
             {

@@ -36,6 +36,16 @@ namespace DawnOfShapes.Core
                     ["unitsLost"] = JObject.FromObject(stats.UnitsLost),
                     ["kills"] = JObject.FromObject(stats.Kills),
                     ["damageDealt"] = JObject.FromObject(stats.DamageDealt.ToDictionary(k => k.Key, k => Round(k.Value))),
+                    ["counter"] = new JObject
+                    {
+                        ["strongHits"] = stats.CounterStrongHits,
+                        ["weakHits"] = stats.CounterWeakHits,
+                        ["strongDamage"] = Round(stats.CounterStrongDamage),
+                        ["weakDamage"] = Round(stats.CounterWeakDamage),
+                        ["bonusDamage"] = Round(stats.CounterBonus),
+                        ["penaltyDamage"] = Round(stats.CounterPenalty),
+                        ["netDamage"] = Round(stats.CounterBonus - stats.CounterPenalty)
+                    },
                     ["upgrades"] = new JArray(stats.Upgrades),
                     ["pointsHeldSamples"] = new JArray(stats.PointsHeldSamples)
                 };
@@ -56,6 +66,7 @@ namespace DawnOfShapes.Core
                 ["duration"] = Round(match.MatchTime),
                 ["pointSampleIntervalSeconds"] = 30,
                 ["balanceFile"] = match.Options.BalancePath,
+                ["counterMatrix"] = JObject.FromObject(match.Counters.ToTable()),
                 ["players"] = players
             };
             WriteFile(path, root);
@@ -90,6 +101,7 @@ namespace DawnOfShapes.Core
                     {
                         ["key"] = MatchStats.UnitKey(u.displayName),
                         ["faction"] = f.FactionName,
+                        ["shape"] = u.Shape.ToString(),
                         ["cost"] = u.cost,
                         ["producible"] = u.producible,
                         ["maxHealth"] = u.maxHealth,

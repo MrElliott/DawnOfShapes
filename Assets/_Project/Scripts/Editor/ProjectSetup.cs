@@ -55,6 +55,7 @@ namespace DawnOfShapes.EditorTools
             };
 
             data.Settings = EnsureAsset<MatchSettings>(DataFolder + "/MatchSettings.asset", _ => { });
+            EnsureCounterMatrix(data.Settings);
             data.Visuals = EnsureAsset<GameVisuals>(DataFolder + "/GameVisuals.asset", v => { });
             data.Visuals.unlitMaterial = EnsureMaterial("Unlit_Tint", Color.white, UnlitShader);
             data.Visuals.selectionMaterial = EnsureMaterial("SelectionRing", new Color(0.3f, 1f, 0.45f), LitShader);
@@ -65,6 +66,21 @@ namespace DawnOfShapes.EditorTools
             data.Factions = EnsureFactions(data);
             AssetDatabase.SaveAssets();
             return data;
+        }
+
+        /// <summary>Creates the counter matrix asset if missing and links it from MatchSettings.</summary>
+        public static void EnsureCounterMatrix(MatchSettings settings = null)
+        {
+            EnsureFolder(DataFolder);
+            if (settings == null) settings = AssetDatabase.LoadAssetAtPath<MatchSettings>(DataFolder + "/MatchSettings.asset");
+            var matrix = EnsureAsset<CounterMatrix>(DataFolder + "/CounterMatrix.asset",
+                m => m.SetCycle(CounterMatrix.DefaultStrong, CounterMatrix.DefaultWeak));
+            if (settings != null && settings.counters != matrix)
+            {
+                settings.counters = matrix;
+                EditorUtility.SetDirty(settings);
+            }
+            AssetDatabase.SaveAssets();
         }
 
         [MenuItem("Dawn of Shapes/Setup/Configure URP")]

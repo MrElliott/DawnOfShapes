@@ -35,6 +35,12 @@ namespace DawnOfShapes.Units
         private float repathTimer;
         private float slowFactor = 1f;
         private float slowTimer;
+        private MeshRenderer bodyRenderer;
+        private MaterialPropertyBlock flashBlock;
+        private float flashTimer;
+
+        private const float CounterFlashDuration = 0.15f;
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 
         public UnitDefinition Definition => definition;
         public UnitOrder Order => order;
@@ -145,6 +151,11 @@ namespace DawnOfShapes.Units
             if (IsDead || definition == null || !agent.isOnNavMesh) return;
             float dt = Time.deltaTime;
             if (dt <= 0f) return;
+            if (flashTimer > 0f)
+            {
+                flashTimer -= dt;
+                if (flashTimer <= 0f && bodyRenderer != null) bodyRenderer.SetPropertyBlock(null);
+            }
 
             cooldown -= dt;
             scanTimer -= dt;
@@ -314,15 +325,41 @@ namespace DawnOfShapes.Units
             {
                 unit.ApplySlow(source.slowAmount, source.slowDuration);
             }
-            float dealt = target.TakeDamage(damage);
+            var match = MatchManager.Instance;
+            var targetUnit = target as Unit;
+            float multiplier = 1f;
+            if (source != null && targetUnit != null && match != null && match.Counters != null)
+            {
+                multiplier = match.Counters.Get(source.Shape, targetUnit.Definition.Shape);
+            }
+            float dealt = target.TakeDamage(damage, multiplier);
+            if (multiplier > 1f && targetUnit != null && !targetUnit.IsDead) targetUnit.FlashCounterHit();
 
-            var stats = MatchManager.Instance != null ? MatchManager.Instance.GetState(attackerPlayerId)?.Stats : null;
+            var stats = match != null ? match.GetState(attackerPlayerId)?.Stats : null;
             if (stats != null && source != null)
             {
                 string key = MatchStats.UnitKey(source.displayName);
                 stats.AddDamage(key, dealt);
+                stats.AddCounterHit(multiplier, dealt);
                 if (target.IsDead) stats.Add(stats.Kills, key);
             }
+        }
+
+        /// <summary>Brief pale tint showing that a countering (bonus damage) hit landed.</summary>
+        private void FlashCounterHit()
+        {
+            if (Application.isBatchMode) return;
+            if (bodyRenderer == null)
+            {
+                bodyRenderer = GetComponentInChildren<MeshRenderer>();
+                if (bodyRenderer == null || bodyRenderer.sharedMaterial == null) return;
+                flashBlock = new MaterialPropertyBlock();
+            }
+            var mat = bodyRenderer.sharedMaterial;
+            Color baseColor = mat.HasProperty(BaseColorId) ? mat.GetColor(BaseColorId) : Color.grey;
+            flashBlock.SetColor(BaseColorId, Color.Lerp(baseColor, Color.white, 0.75f));
+            bodyRenderer.SetPropertyBlock(flashBlock);
+            flashTimer = CounterFlashDuration;
         }
 
         protected override void Die()

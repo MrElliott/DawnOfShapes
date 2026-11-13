@@ -17,6 +17,7 @@ namespace DawnOfShapes.EditorTools
         [MenuItem("Dawn of Shapes/Build/Windows")]
         public static void BuildWindows()
         {
+            ProjectSetup.EnsureCounterMatrix();
             string[] scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray();
             if (scenes.Length == 0 && File.Exists(TestMapBuilder.ScenePath))
             {

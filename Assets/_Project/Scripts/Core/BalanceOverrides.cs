@@ -18,14 +18,18 @@ namespace DawnOfShapes.Core
     ///   "units":    { "Spire": { "damage": 55, "maxHealth": 130 } },
     ///   "upgrades": { "Momentum": { "amount": 0.25 } },
     ///   "factions": { "Cubes": { "researchBuildingCost": 120 } },
-    ///   "settings": { "baseMaxHealth": 4000 }
+    ///   "settings": { "baseMaxHealth": 4000 },
+    ///   "counters": { "strong": 1.2, "weak": 0.9, "matrix": { "Cube": { "Sphere": 1.25 } } }
     /// }
     /// </code>
     /// Units and upgrades are matched by display name with or without spaces, or by asset name.
+    /// Counters: "strong"/"weak" rebuild the whole Cube &gt; Sphere &gt; Pyramid &gt; Cube cycle (a missing one
+    /// uses its default), then "matrix" entries (attacker -> defender -> multiplier) override single cells.
+    /// A unit's counter class can be changed with e.g. { "units": { "Roller": { "shapeClass": "Cube" } } }.
     /// </summary>
     public static class BalanceOverrides
     {
-        public static int Apply(string path, IReadOnlyList<FactionDefinition> factions, MatchSettings settings)
+        public static int Apply(string path, IReadOnlyList<FactionDefinition> factions, MatchSettings settings, CounterMatrix counters = null)
         {
             if (!File.Exists(path))
             {
@@ -78,6 +82,11 @@ namespace DawnOfShapes.Core
                 applied += ApplyFields(settings, settingOverrides, "settings");
             }
 
+            if (root["counters"] is JObject counterOverrides && counters != null)
+            {
+                applied += ApplyCounters(counters, counterOverrides);
+            }
+
             Debug.Log($"[DawnOfShapes] Balance overrides from {path}: {applied} value(s) applied.");
             return applied;
         }
@@ -103,6 +112,42 @@ namespace DawnOfShapes.Core
                    || string.Equals(key, assetName, StringComparison.OrdinalIgnoreCase);
         }
 
+        private static int ApplyCounters(CounterMatrix counters, JObject values)
+        {
+            int count = 0;
+            string before = counters.ToString();
+            if (values["strong"] != null || values["weak"] != null)
+            {
+                float strong = values.Value<float?>("strong") ?? CounterMatrix.DefaultStrong;
+                float weak = values.Value<float?>("weak") ?? CounterMatrix.DefaultWeak;
+                counters.SetCycle(strong, weak);
+                count++;
+            }
+            if (values["matrix"] is JObject matrix)
+            {
+                foreach (var row in matrix.Properties())
+                {
+                    if (!Enum.TryParse(row.Name, true, out ShapeType attacker) || !(row.Value is JObject cells))
+                    {
+                        Warn($"counters.matrix: bad attacker '{row.Name}'");
+                        continue;
+                    }
+                    foreach (var cell in cells.Properties())
+                    {
+                        if (!Enum.TryParse(cell.Name, true, out ShapeType defender))
+                        {
+                            Warn($"counters.matrix.{row.Name}: bad defender '{cell.Name}'");
+                            continue;
+                        }
+                        counters.Set(attacker, defender, cell.Value.Value<float>());
+                        count++;
+                    }
+                }
+            }
+            Debug.Log($"[DawnOfShapes] Override counters: {before} -> {counters}");
+            return count;
+        }
+
         private static int ApplyFields(object target, JObject values, string label)
         {
             if (values == null) return 0;
@@ -120,7 +165,9 @@ namespace DawnOfShapes.Core
                 {
                     object before = field.GetValue(target);
                     object raw = prop.Value is JValue jv ? jv.Value : prop.Value.ToString();
-                    object value = Convert.ChangeType(raw, field.FieldType, CultureInfo.InvariantCulture);
+                    object value = field.FieldType.IsEnum
+                        ? Enum.Parse(field.FieldType, raw.ToString(), true)
+                        : Convert.ChangeType(raw, field.FieldType, CultureInfo.InvariantCulture);
                     field.SetValue(target, value);
                     Debug.Log($"[DawnOfShapes] Override {label}.{prop.Name}: {before} -> {value}");
                     count++;

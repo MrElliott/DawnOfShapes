@@ -1,0 +1,5 @@
+{ "counters": { "matrix": {
+  "Cube":    { "Cube": 1.0,  "Sphere": 1.05, "Pyramid": 0.95 },
+  "Sphere":  { "Cube": 0.97, "Sphere": 1.0,  "Pyramid": 1.14 },
+  "Pyramid": { "Cube": 1.1,  "Sphere": 0.93, "Pyramid": 1.0 } } },
+  "units": { "BlockTrooper": { "cost": 70 } } }

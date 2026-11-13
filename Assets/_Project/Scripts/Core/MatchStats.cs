@@ -15,6 +15,31 @@ namespace DawnOfShapes.Core
         public readonly List<string> Upgrades = new List<string>();
         public readonly List<int> PointsHeldSamples = new List<int>();
 
+        // Shape counters: hits where the multiplier was above / below 1, health removed by them, and the
+        // difference the multiplier made (bonus is extra damage dealt, penalty is damage lost).
+        public int CounterStrongHits { get; set; }
+        public int CounterWeakHits { get; set; }
+        public float CounterStrongDamage { get; set; }
+        public float CounterWeakDamage { get; set; }
+        public float CounterBonus { get; set; }
+        public float CounterPenalty { get; set; }
+
+        public void AddCounterHit(float multiplier, float dealt)
+        {
+            if (multiplier > 1f)
+            {
+                CounterStrongHits++;
+                CounterStrongDamage += dealt;
+                CounterBonus += dealt - dealt / multiplier;
+            }
+            else if (multiplier < 1f)
+            {
+                CounterWeakHits++;
+                CounterWeakDamage += dealt;
+                CounterPenalty += dealt / multiplier - dealt;
+            }
+        }
+
         public float FormEarned { get; set; }
         public float FormSpent { get; set; }
 
